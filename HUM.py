@@ -583,33 +583,33 @@ def display_summary_tables(energy_rates, summary_of_consumption, summary_of_char
 
     expander_consumption = st.expander(f"### Energy Consumption", expanded=True)
     with expander_consumption:
-       st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), use_container_width=True)
+       st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), width='stretch')
     # st.write(f"### Energy Consumption")
-    # st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), use_container_width=True)
+    # st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), width='stretch')
 
     expander_rates = st.expander(f"### Bulk Electricity Prices", expanded=False)
     with expander_rates:
-       st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), use_container_width=True)
+       st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), width='stretch')
     # st.write("### Bulk Electricity Rates")
-    # st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), use_container_width=True)
+    # st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), width='stretch')
 
     expander_costs = st.expander(f"### Yearly costs", expanded=False)
     with expander_costs:
-       st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), use_container_width=True)
+       st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), width='stretch')
     # st.write("### Yearly Costs")
-    # st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), use_container_width=True)
+    # st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), width='stretch')
 
     expander_tariffs = st.expander(f"### Tariffs & Factors", expanded=False)
     with expander_tariffs:
-       st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), use_container_width=True)  # Adjust font size
+       st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), width='stretch')  # Adjust font size
     # st.write(f"### Tariffs & Factors")
-    # st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), use_container_width=True)  # Adjust font size
+    # st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), width='stretch')  # Adjust font size
 
     expander_charges = st.expander(f"### Charges", expanded=False)
     with expander_charges:
-       st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), use_container_width=True)
+       st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), width='stretch')
     # st.write("### Charges")
-    # st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), use_container_width=True)
+    # st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), width='stretch')
 
 
     return
@@ -742,9 +742,9 @@ st.set_page_config(
     }
 )
 
-#st.image("logo_hum.png", use_column_width=True) #, width=300)
+#st.image("logo_hum.png", width='stretch') #, width=300)
 
-st.image("hum-solar-header.jpg", use_column_width=True)
+st.image("hum-solar-header.jpg", width='stretch')
 
 st.title("⚡ Bulk Electricity Pricing for Large Contracts")
 

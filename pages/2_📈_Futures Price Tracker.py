@@ -29,12 +29,12 @@ st.set_page_config(
 #########################################################################################################
 #########################################################################################################
 
-st.image("hum-solar-header.jpg", use_column_width=True)
+st.image("hum-solar-header.jpg", width='stretch')
 
 # Streamlit UI for Database Explorer
 st.title("📈 Futures Price Tracker")
 
-#st.sidebar.image("logo_hum.png", use_column_width=True)
+#st.sidebar.image("logo_hum.png", width='stretch')
 
 #########################################################################################################
 #########################################################################################################
@@ -95,7 +95,7 @@ def display_chart():
     fig.update_layout(height=500)
 
     # Display the Plotly chart
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # Display the DataFrame
     #st.write(df)

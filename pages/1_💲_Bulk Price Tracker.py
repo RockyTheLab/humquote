@@ -29,12 +29,12 @@ st.set_page_config(
 #########################################################################################################
 #########################################################################################################
 
-st.image("hum-solar-header.jpg", use_column_width=True)
+st.image("hum-solar-header.jpg", width='stretch')
 
 # Streamlit UI for Database Explorer
 st.title("💲 Bulk Price Tracker")
 
-#st.sidebar.image("logo_hum.png", use_column_width=True)
+#st.sidebar.image("logo_hum.png", width='stretch')
 
 #########################################################################################################
 #########################################################################################################
@@ -158,7 +158,7 @@ def display_index_chart():
             height=600,  # Customize the size as needed
             yaxis_title="AUD$/MWh"  # Set the y-axis label
         ) # Customize the size as needed
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
 
 #########################################################################################################
