@@ -2,6 +2,13 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import numpy as np
+
+# Compatibility shim for numpy legacy type names (e.g. np.bool8)
+try:
+    if not hasattr(np, 'bool8'):
+        np.bool8 = np.bool_
+except Exception:
+    pass
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
@@ -29,7 +36,7 @@ st.set_page_config(
 #########################################################################################################
 #########################################################################################################
 
-st.image("hum-solar-header.jpg", width='stretch')
+st.image("hum-solar-header.jpg", use_container_width=True)
 
 # Streamlit UI for Database Explorer
 st.title("📈 Futures Price Tracker")
@@ -95,10 +102,11 @@ def display_chart():
     fig.update_layout(height=500)
 
     # Display the Plotly chart
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
 
     # Display the DataFrame
     #st.write(df)
+
 
 
 #########################################################################################################

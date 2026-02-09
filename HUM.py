@@ -2,6 +2,16 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import numpy as np
+
+# Compatibility shim: some third-party libs (older plotly versions)
+# expect legacy numpy type names like `bool8`. Ensure these aliases
+# exist on the numpy module to avoid AttributeError with NumPy >=2.x.
+try:
+    if not hasattr(np, 'bool8'):
+        np.bool8 = np.bool_
+except Exception:
+    pass
+
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
@@ -583,31 +593,31 @@ def display_summary_tables(energy_rates, summary_of_consumption, summary_of_char
 
     expander_consumption = st.expander(f"### Energy Consumption", expanded=True)
     with expander_consumption:
-       st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), width='stretch')
+        st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), use_container_width=True)
     # st.write(f"### Energy Consumption")
     # st.plotly_chart(create_table_figure(summary_of_consumption, font_size=16, cell_height=35), width='stretch')
 
     expander_rates = st.expander(f"### Bulk Electricity Prices", expanded=False)
     with expander_rates:
-       st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), width='stretch')
+        st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), use_container_width=True)
     # st.write("### Bulk Electricity Rates")
     # st.plotly_chart(create_rates_figure(summary_of_rates, font_size=16, cell_height=35), width='stretch')
 
     expander_costs = st.expander(f"### Yearly costs", expanded=False)
     with expander_costs:
-       st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), width='stretch')
+        st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), use_container_width=True)
     # st.write("### Yearly Costs")
     # st.plotly_chart(create_table_figure(summary_of_costs, font_size=16, cell_height=35), width='stretch')
 
     expander_tariffs = st.expander(f"### Tariffs & Factors", expanded=False)
     with expander_tariffs:
-       st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), width='stretch')  # Adjust font size
+        st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), use_container_width=True)  # Adjust font size
     # st.write(f"### Tariffs & Factors")
     # st.plotly_chart(create_rates_figure(energy_rates, font_size=16, cell_height=35), width='stretch')  # Adjust font size
 
     expander_charges = st.expander(f"### Charges", expanded=False)
     with expander_charges:
-       st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), width='stretch')
+        st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), use_container_width=True)
     # st.write("### Charges")
     # st.plotly_chart(create_rates_figure(summary_of_charges, font_size=16, cell_height=35), width='stretch')
 
@@ -662,19 +672,31 @@ def save_to_sql_database(df, db_file, table_name='futures_data'):
         cursor = conn.cursor()
         data_appended = False  # Flag to track if any new data was appended
 
+        insert_query = f'INSERT OR IGNORE INTO {table_name} ("Quote Date", "Year", "NSW", "VIC", "QLD", "SA") VALUES (?, ?, ?, ?, ?, ?)'
+        records_to_insert = []
         for index, row in df.iterrows():
-            quote_date = row['Quote Date']  # Assuming 'Quote Date' is the column for uniqueness
-            year = row['Year']  # Get the Year value from the DataFrame row
-            
-            # Modify the query to check for existing records based on both 'Quote Date' and 'Year'
-            query = f"SELECT COUNT(*) FROM {table_name} WHERE `Quote Date` = ? AND `Year` = ?"
-            cursor.execute(query, (quote_date, year))
-            exists = cursor.fetchone()[0]
+            quote_date = row['Quote Date']
+            # Normalize quote_date to ISO string if it's a date/datetime
+            if hasattr(quote_date, 'isoformat'):
+                quote_date_val = quote_date.isoformat()
+            else:
+                quote_date_val = str(quote_date)
 
-            if exists == 0:
-                # If the row doesn't exist, append it
-                row.to_frame().T.to_sql(table_name, conn, if_exists='append', index=False)
-                data_appended = True  # Update flag since new data was appended
+            year = int(row['Year'])
+            nsw = float(row.get('NSW', np.nan)) if not pd.isna(row.get('NSW', np.nan)) else None
+            vic = float(row.get('VIC', np.nan)) if not pd.isna(row.get('VIC', np.nan)) else None
+            qld = float(row.get('QLD', np.nan)) if not pd.isna(row.get('QLD', np.nan)) else None
+            sa = float(row.get('SA', np.nan)) if not pd.isna(row.get('SA', np.nan)) else None
+
+            records_to_insert.append((quote_date_val, year, nsw, vic, qld, sa))
+
+        if records_to_insert:
+            try:
+                cursor.executemany(insert_query, records_to_insert)
+                conn.commit()
+                data_appended = True
+            except sqlite3.Error as e:
+                st.error(f"Database insert error: {e}")
 
         conn.close()
 
@@ -714,7 +736,25 @@ def save_bulk_prices_db(bulk_price_index_df, db_file, table_name='bulk_price_ind
     conn = create_connection(db_file)
     if conn is not None:
         try:
-            bulk_price_index_df.to_sql(table_name, conn, if_exists='append', index=False, method="multi")
+            # Use sqlite3 executemany to avoid requiring SQLAlchemy for pandas.to_sql in newer pandas
+            cursor = conn.cursor()
+            insert_query = f'INSERT OR IGNORE INTO {table_name} ("Quote Date", "NSW", "QLD", "VIC", "SA") VALUES (?, ?, ?, ?, ? )'
+            records = []
+            for _, row in bulk_price_index_df.iterrows():
+                quote_date = row.get('Quote Date') or row.get('Quote Date')
+                if hasattr(quote_date, 'isoformat'):
+                    quote_date_val = quote_date.isoformat()
+                else:
+                    quote_date_val = str(quote_date)
+                nsw = float(row.get('NSW', np.nan)) if not pd.isna(row.get('NSW', np.nan)) else None
+                qld = float(row.get('QLD', np.nan)) if not pd.isna(row.get('QLD', np.nan)) else None
+                vic = float(row.get('VIC', np.nan)) if not pd.isna(row.get('VIC', np.nan)) else None
+                sa = float(row.get('SA', np.nan)) if not pd.isna(row.get('SA', np.nan)) else None
+                records.append((quote_date_val, nsw, qld, vic, sa))
+
+            if records:
+                cursor.executemany(insert_query, records)
+                conn.commit()
             st.success("Bulk Price Index data saved to database successfully.")
         except Exception as e:
             st.error(f"Error saving data to database: {e}")
@@ -742,9 +782,9 @@ st.set_page_config(
     }
 )
 
-#st.image("logo_hum.png", width='stretch') #, width=300)
+#st.image("logo_hum.png", use_container_width=True) #, width=300)
 
-st.image("hum-solar-header.jpg", width='stretch')
+st.image("hum-solar-header.jpg", use_container_width=True)
 
 st.title("⚡ Bulk Electricity Pricing for Large Contracts")
 

@@ -1,7 +1,14 @@
-#import streamlit as st
+import streamlit as st
 import sqlite3
 import pandas as pd
 import numpy as np
+
+# Compatibility shim for numpy legacy type names (e.g. np.bool8)
+try:
+    if not hasattr(np, 'bool8'):
+        np.bool8 = np.bool_
+except Exception:
+    pass
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
@@ -29,7 +36,7 @@ st.set_page_config(
 #########################################################################################################
 #########################################################################################################
 
-st.image("hum-solar-header.jpg", width='stretch')
+st.image("hum-solar-header.jpg", use_container_width=True)
 
 # Streamlit UI for Database Explorer
 st.title("💲 Bulk Price Tracker")
@@ -118,7 +125,31 @@ def calculate_bulk_price_index(db_path='futures_prices.db'):
 
 def save_bulk_price_index_to_db(bulk_price_index_df, db_path='bulk_price_index.db'):
     conn = sqlite3.connect(db_path)
-    bulk_price_index_df.to_sql('bulk_price_index', conn, if_exists='replace', index=False)
+    cursor = conn.cursor()
+    # Replace table if exists
+    cursor.execute('DROP TABLE IF EXISTS bulk_price_index')
+    cursor.execute('''CREATE TABLE bulk_price_index (
+                        "Quote Date" TEXT PRIMARY KEY,
+                        "NSW" REAL,
+                        "QLD" REAL,
+                        "VIC" REAL,
+                        "SA" REAL
+                    )''')
+    records = []
+    for _, row in bulk_price_index_df.iterrows():
+        quote_date = row.get('Quote Date')
+        if hasattr(quote_date, 'isoformat'):
+            qd = quote_date.isoformat()
+        else:
+            qd = str(quote_date)
+        nsw = float(row.get('NSW', np.nan)) if not pd.isna(row.get('NSW', np.nan)) else None
+        qld = float(row.get('QLD', np.nan)) if not pd.isna(row.get('QLD', np.nan)) else None
+        vic = float(row.get('VIC', np.nan)) if not pd.isna(row.get('VIC', np.nan)) else None
+        sa = float(row.get('SA', np.nan)) if not pd.isna(row.get('SA', np.nan)) else None
+        records.append((qd, nsw, qld, vic, sa))
+    if records:
+        cursor.executemany('INSERT OR REPLACE INTO bulk_price_index ("Quote Date", "NSW", "QLD", "VIC", "SA") VALUES (?, ?, ?, ?, ?)', records)
+    conn.commit()
     conn.close()
 
 # Function to initialize and store the DataFrame in session state
@@ -158,7 +189,7 @@ def display_index_chart():
             height=600,  # Customize the size as needed
             yaxis_title="AUD$/MWh"  # Set the y-axis label
         ) # Customize the size as needed
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
 
 
 #########################################################################################################
