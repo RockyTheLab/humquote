@@ -328,17 +328,17 @@ def calculate_bulk_prices():
                             'Fixed Costs ($/year)', 
                             'Total Costs ($/year)', 
                             'kWh/year',
-                            'Bundled Bulk Cost ($/kWh)'],
+                            'Bundled Bulk Cost (c/kWh)'],
                                 'Year 1': [0] * 10, 'Year 2': [0] * 10, 'Year 3': [0] * 10, 'Average': [0] * 10,
                             })
 
     summary_of_rates = pd.DataFrame({
         'Rates Summary': [
-                          'Energy ($/kWh)', 
-                          'Network ($/kWh)', 
-                          'Other ($/kWh)', 
-                          'Fixed ($/kWh)', 
-                          'Total ($/kWh)'],
+                          'Energy (c/kWh)', 
+                          'Network (c/kWh)', 
+                          'Other (c/kWh)', 
+                          'Fixed (c/kWh)', 
+                          'Total (c/kWh)'],
                                 'Year 1': [0] * 5, 'Year 2': [0] * 5, 'Year 3': [0] * 5, 'Average': [0] * 5,
                             })
 
@@ -873,7 +873,7 @@ if not st.session_state['updated_df'].empty:
 
     with c1:
         formatted_price = "{:.4f}".format(bulk_price)  # format to 4 decimal places
-        #st.write(f"# $/kWh {formatted_price}")
+        #st.write(f"# c/kWh {formatted_price}")
         # Using st.write
         st.markdown(
                     f"""
@@ -883,13 +883,13 @@ if not st.session_state['updated_df'].empty:
                         align-items: center;
                         height: 200px;  /* Adjust the height as needed */
                     ">
-                        <h1>$/kWh {formatted_price}</h1>
+                        <h1>c/kWh {formatted_price}</h1>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
-        #st.write(f'<h1 style="text-align: center;">$/kWh {formatted_price}</h1>', unsafe_allow_html=True)
-        #st.write(f"# $/KWh {bulk_price.astype(float).round(4)}")
+        #st.write(f'<h1 style="text-align: center;">c/kWh {formatted_price}</h1>', unsafe_allow_html=True)
+        #st.write(f"# c/KWh {bulk_price.astype(float).round(4)}")
 
     with c2:
         st.table(summary_of_rates.set_index('Rates Summary'))
