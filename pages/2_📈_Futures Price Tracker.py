@@ -88,20 +88,44 @@ def display_data_table():
 # Assuming the DataFrame is already stored in the session state as 'futures_data'
 # Make sure this function is called after 'initialize_data()' is called
 def display_chart():
-    df = st.session_state['futures_data']
+    df = st.session_state['futures_data'].copy()
+
+    if df.empty:
+        st.warning("No futures data available to plot.")
+        return
+
+    if "Quote Date" in df.columns:
+        df["Quote Date"] = pd.to_datetime(df["Quote Date"], errors="coerce")
+
+    if "Year" in df.columns:
+        df["Year"] = df["Year"].astype(str)
 
     # Dropdown for selecting the column to plot
     selected_column = st.selectbox("Select State to plot:", ["NSW", "VIC", "QLD", "SA"])
 
-    # Create a Plotly line chart
-    fig = px.line(df, x="Quote Date", y=selected_column, color="Year",
-                  labels={"Quote Date": "Quote Date", selected_column: "$AUD/MWh"},
-                  title=f"{selected_column} Futures Prices Over Time")
+    if selected_column not in df.columns:
+        st.error(f"Selected column '{selected_column}' is not present in the futures data.")
+        return
 
-    # Increase the height of the chart here
-    fig.update_layout(height=500)
+    # Draw one manual trace per Year to avoid Plotly Express group-by issues
+    fig = go.Figure()
+    for year, group in df.groupby('Year'):
+        fig.add_trace(go.Scatter(
+            x=group['Quote Date'],
+            y=group[selected_column],
+            mode='lines+markers',
+            name=str(year),
+            connectgaps=True,
+        ))
 
-    # Display the Plotly chart
+    fig.update_layout(
+        title=f"{selected_column} Futures Prices Over Time",
+        xaxis_title="Quote Date",
+        yaxis_title="$AUD/MWh",
+        height=500,
+        legend_title="Year",
+    )
+
     st.plotly_chart(fig, use_container_width=True)
 
     # Display the DataFrame

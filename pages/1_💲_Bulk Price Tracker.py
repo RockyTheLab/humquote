@@ -121,6 +121,10 @@ def calculate_bulk_price_index(db_path='futures_prices.db'):
     bulk_price_df = pd.DataFrame(results, columns=["Quote Date", "State", "Bulk Price Index"])
     bulk_price_pivoted_df = bulk_price_df.pivot(index='Quote Date', columns='State', values='Bulk Price Index').reset_index()
 
+    # Ensure state columns exist even if some states have no data
+    expected_cols = ["Quote Date", "NSW", "QLD", "VIC", "SA"]
+    bulk_price_pivoted_df = bulk_price_pivoted_df.reindex(columns=expected_cols)
+
     return bulk_price_pivoted_df
 
 def save_bulk_price_index_to_db(bulk_price_index_df, db_path='bulk_price_index.db'):
@@ -180,15 +184,35 @@ def display_index_chart():
 
         df = st.session_state['bulk_price_index']
 
-        # Create and display a Plotly chart
-        fig = px.line(df.melt(id_vars=["Quote Date"], value_vars=["NSW", "QLD", "VIC", "SA"], 
-                                               var_name="State", value_name="Bulk Price Index"), 
-                      x="Quote Date", y="Bulk Price Index", color='State', 
-                      title="Bulk Price Index Over Time")
+        if df.empty:
+            st.warning("No bulk price index data is available to plot.")
+            return
+
+        value_vars = [col for col in ["NSW", "QLD", "VIC", "SA"] if col in df.columns]
+        if not value_vars:
+            st.warning("The bulk price index data does not contain any valid state columns to plot.")
+            return
+
+        if "Quote Date" in df.columns:
+            df["Quote Date"] = pd.to_datetime(df["Quote Date"], errors="coerce")
+
+        fig = go.Figure()
+        for state in value_vars:
+            fig.add_trace(go.Scatter(
+                x=df["Quote Date"],
+                y=df[state],
+                mode="lines",
+                name=state,
+                connectgaps=True,
+            ))
+
         fig.update_layout(
-            height=600,  # Customize the size as needed
-            yaxis_title="AUD$/MWh"  # Set the y-axis label
-        ) # Customize the size as needed
+            title="Bulk Price Index Over Time",
+            height=600,
+            yaxis_title="AUD$/MWh",
+            xaxis_title="Quote Date",
+            legend_title="State",
+        )
         st.plotly_chart(fig, use_container_width=True)
 
 
