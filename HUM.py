@@ -30,7 +30,7 @@ from xlsxwriter import Workbook
 # Scraper function that fetches data and saves it to the SQL database
 def scrape_and_save():
     # The target URL
-    url = 'https://www.asxenergy.com.au'
+    url = 'https://legacy.asxenergy.com.au'
     try:
         response = requests.get(url)
         response.raise_for_status()
