@@ -26,7 +26,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 CSV_FILE_PATH = '_old/historical-futures-data.csv'
 DB_FILE_PATH = 'futures_prices.db'  # Now relative to repository root
 TABLE_NAME = 'futures_data'
-ASX_URL = 'https://www.asxenergy.com.au'
+ASX_URL = 'https://legacy.asxenergy.com.au'
 
 def create_database_connection(db_file: str):
     """Create and return a connection to the SQLite database."""
